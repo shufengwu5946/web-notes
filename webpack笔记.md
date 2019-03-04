@@ -399,6 +399,125 @@ webpack.config.js
 
 为了更容易地追踪错误和警告，JavaScript 提供了 source map 功能，将编译后的代码映射回原始源代码。如果一个错误来自于 b.js，source map 就会明确的告诉你。
 
+source map 有很多不同的选项可用，我们使用 inline-source-map 选项为例作为说明：
+
+在 print.js 文件中生成一个错误：
+
+src/print.js
+```
+  export default function printMe() {
+-   console.log('I get called from print.js!');
++   cosnole.error('I get called from print.js!');
+  }
+```
+npm run build 之后，浏览器控制台定位错误在app.bundle.js文件：
+```
+app.bundle.js:1 I get called from print.js!
+r @ app.bundle.js:1
+```
+做如下修改：
+
+webpack.config.js
+```
+const path = require('path');
+  const HtmlWebpackPlugin = require('html-webpack-plugin');
+  const CleanWebpackPlugin = require('clean-webpack-plugin');
+
+  module.exports = {
+    entry: {
+      app: './src/index.js',
+      print: './src/print.js'
+    },
++   devtool: 'inline-source-map',
+    ...
+  };
+```
+执行npm run build，并在浏览器运行，可以定位错误在源文件print.js
+```
+I get called from print.js!
+r @ print.js:2
+```
+source map帮助定位了问题的确切位置。
+
+## 开发工具
+
+* webpack's Watch Mode
+* webpack-dev-server
+* webpack-dev-middleware
+
+### 观察模式（Watch Mode）
+
+添加一个用于启动 webpack 的观察模式的 npm script 脚本：
+
+package.json
+```
+  {
+    ...
+    
+    "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1",
++     "watch": "webpack --watch",
+      "build": "webpack"
+    },
+    
+    ...
+  }
+```
+命令行中运行 npm run watch，然后就会看到 webpack 是如何编译代码。 然而，你会发现并没有退出命令行。这是因为 script 脚本当前还在观察文件。
+
+修改并保存文件并检查终端窗口。应该可以看到 webpack 自动重新编译修改后的模块！
+
+> 唯一的缺点是，为了看到修改后的实际效果，你需要刷新浏览器。
+
+### webpack-dev-server
+
+webpack-dev-server 为你提供了一个简单的 web 服务器，并且能够实时重新加载(live reloading)。让我们设置以下：
+```
+npm install --save-dev webpack-dev-server
+```
+修改配置文件，告诉开发服务器(dev server)，在哪里查找文件：
+
+webpack.config.js
+```
+  const path = require('path');
+  const HtmlWebpackPlugin = require('html-webpack-plugin');
+  const CleanWebpackPlugin = require('clean-webpack-plugin');
+
+  module.exports = {
+    entry: {
+      app: './src/index.js',
+      print: './src/print.js'
+    },
+    devtool: 'inline-source-map',
++   devServer: {
++     contentBase: './dist'
++   },
+
+    ...
+    
+  };
+```
+以上配置告知 webpack-dev-server，在 localhost:8080 下建立服务，将 dist 目录下的文件，作为可访问文件。
+
+让我们添加一个 script 脚本，可以直接运行开发服务器(dev server)：
+
+package.json
+
+  {
+    ...
+    
+    "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1",
+      "watch": "webpack --watch",
++     "start": "webpack-dev-server --open",
+      "build": "webpack"
+    },
+    ...
+  }
+现在，我们可以在命令行中运行 npm start，就会看到浏览器自动加载页面。如果现在修改和保存任意源文件，web 服务器就会自动重新加载编译后的代码。
+
+#### Hot Module Replacement?????????????????????????????????????????????????????????
+
 # 入口(entry)
 
 * 指示 webpack 应该使用哪个模块，来作为构建其内部依赖图的开始。
