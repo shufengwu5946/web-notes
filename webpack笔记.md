@@ -2,6 +2,7 @@
 
 - [概念](#概念)
 - [安装](#安装)
+- [Getting started](#Getting-started)
 
 # 概念
 
