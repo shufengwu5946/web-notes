@@ -399,7 +399,7 @@ webpack.config.js
 
 ## Manifest?????????????????????????????????????????????????????
 
-# 开发
+# 开发环境
 
 ## 使用 source map 
 
@@ -529,7 +529,101 @@ package.json
 
 ### 使用 webpack-dev-middleware
 
-webpack-dev-middleware 是一个容器(wrapper)，它可以把 webpack 处理后的文件传递给一个服务器(server)。 webpack-dev-server 在内部使用了它
+webpack-dev-middleware 是一个容器(wrapper)，它可以把 webpack 处理后的文件传递给一个服务器(server)。 webpack-dev-server 在内部使用了它，然而它也可以作为一个单独的 package 来使用，以便根据需求进行更多自定义设置。
+
+# 热模块替换
+
+## 启用 HMR 
+
+此功能可以很大程度提高生产效率。
+
+webpack.config.js
+```
+  const path = require('path');
+  const HtmlWebpackPlugin = require('html-webpack-plugin');
+  const CleanWebpackPlugin = require('clean-webpack-plugin');
++ const webpack = require('webpack');
+
+  module.exports = {
+    entry: {
+-      app: './src/index.js',
+-      print: './src/print.js'
++      app: './src/index.js'
+    },
+    devtool: 'inline-source-map',
+    devServer: {
+      contentBase: './dist',
++     hot: true
+    },
+    plugins: [
+      new CleanWebpackPlugin(['dist']),
+      new HtmlWebpackPlugin({
+        title: '模块热替换'
+      }),
++     new webpack.HotModuleReplacementPlugin()
+    ],
+    output: {
+      filename: '[name].bundle.js',
+      path: path.resolve(__dirname, 'dist')
+    }
+  };
+```
+
+## HMR 加载样式 
+借助于 style-loader，使用模块热替换来加载 CSS 实际上极其简单。此 loader 在幕后使用了 module.hot.accept，在 CSS 依赖模块更新之后，会将其 patch(修补) 到 <style> 标签中。
+
+安装loader ：
+```
+npm install --save-dev style-loader css-loader
+```
+然后更新配置文件，使用这两个 loader。
+
+webpack.config.js
+```
+  const path = require('path');
+  const HtmlWebpackPlugin = require('html-webpack-plugin');
+  const CleanWebpackPlugin = require('clean-webpack-plugin');
+  const webpack = require('webpack');
+
+  module.exports = {
+    entry: {
+      app: './src/index.js'
+    },
+    devtool: 'inline-source-map',
+    devServer: {
+      contentBase: './dist',
+      hot: true
+    },
++   module: {
++     rules: [
++       {
++         test: /\.css$/,
++         use: ['style-loader', 'css-loader']
++       }
++     ]
++   },
+    plugins: [
+      new CleanWebpackPlugin(['dist']),
+      new HtmlWebpackPlugin({
+        title: '模块热替换'
+      }),
+      new webpack.HotModuleReplacementPlugin()
+    ],
+    output: {
+      filename: '[name].bundle.js',
+      path: path.resolve(__dirname, 'dist')
+    }
+  };
+```
+
+## 其他代码和框架 
+
+社区还提供许多其他 loader 和示例，可以使 HMR 与各种框架和库平滑地进行交互……
+
+* **React Hot Loader：实时调整 react 组件。???????????????????????????????????????????????????????**
+* Vue Loader：此 loader 支持 vue 组件的 HMR，提供开箱即用体验。
+* Elm Hot Loader：支持 Elm 编程语言的 HMR。
+* Angular HMR：没有必要使用 loader！直接修改 NgModule 主文件就够了，它可以完全控制 HMR API。
 
 # 入口(entry)
 
