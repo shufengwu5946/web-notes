@@ -784,6 +784,28 @@ src/index.js
 > * ClosureCompilerPlugin
 > 如果决定尝试一些其他压缩插件，只要确保新插件也会按照 tree shake 指南中所陈述的具有删除未引用代码(dead code)的能力，以及提供 optimization.minimizer。
 
+## source mapping(源码映射)
+
+我们鼓励你在生产环境中启用 source map，因为它们对 debug(调试源码) 和运行 benchmark tests(基准测试) 很有帮助。虽然有着如此强大的功能，然而还是应该针对生产环境用途，选择一个可以快速构建的推荐配置（更多选项请查看 devtool）。对于本指南，我们将在生产环境中使用 source-map 选项，而不是我们在开发环境中用到的 inline-source-map：
+
+webpack.prod.js
+
+```
+  const merge = require('webpack-merge');
+  const common = require('./webpack.common.js');
+
+  module.exports = merge(common, {
+    mode: 'production',
++   devtool: 'source-map'
+  });
+```
+
+> 避免在生产中使用 inline-*** 和 eval-***，因为它们会增加 bundle 体积大小，并降低整体性能。
+
+## 最小化 CSS ????????????????????????????????????????????????????????????????????????
+
+将生产环境下的 CSS 进行压缩会非常重要，请查看 [在生产环境下压缩](https://webpack.docschina.org/plugins/mini-css-extract-plugin/#minimizing-for-production) 章节。
+
 # 入口(entry)
 
 * 指示 webpack 应该使用哪个模块，来作为构建其内部依赖图的开始。
