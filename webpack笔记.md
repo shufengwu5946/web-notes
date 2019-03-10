@@ -625,6 +625,165 @@ webpack.config.js
 * Elm Hot Loader：支持 Elm 编程语言的 HMR。
 * Angular HMR：没有必要使用 loader！直接修改 NgModule 主文件就够了，它可以完全控制 HMR API。
 
+# tree shaking
+
+# 生产环境
+
+## 配置
+
+* development(开发环境) 和 production(生产环境) 这两个环境下的构建目标存在着巨大差异。
+
+* 在开发环境中，我们需要：强大的 source map 和一个有着 live reloading(实时重新加载) 或 hot module replacement(热模块替换) 能力的 localhost server。
+
+* 而生产环境目标则转移至其他方面，关注点在于压缩 bundle、更轻量的 source map、资源优化等，通过这些优化方式改善加载时间。
+
+* 由于要遵循逻辑分离，我们通常建议为每个环境编写彼此独立的 webpack 配置。
+
+保留一个 "common(通用)" 配置。为了将这些配置合并在一起，我们将使用一个名为 webpack-merge 的工具。此工具会引用 "common" 配置，因此我们不必再在环境特定(environment-specific)的配置中编写重复代码。
+
+我们先从安装 webpack-merge ：
+```
+npm install --save-dev webpack-merge
+```
+
+project
+
+```
+- |- webpack.config.js
++ |- webpack.common.js
++ |- webpack.dev.js
++ |- webpack.prod.js
+```
+
+webpack.common.js
+
+```
++ const path = require('path');
++ const HtmlWebpackPlugin = require('html-webpack-plugin');
++ const CleanWebpackPlugin = require('clean-webpack-plugin');
++ 
++ module.exports = {
++     entry: {
++         app: './src/index.js'
++     },
++     output: {
++         filename: '[name].bundle.js',
++         path: path.resolve(__dirname, 'dist')
++     },
++     plugins: [
++         new HtmlWebpackPlugin({
++             title: 'Output Management'
++         }),
++         new CleanWebpackPlugin(['dist'])
++     ]
++ };
+```
+
+webpack.dev.js
+
+```
++ const merge = require('webpack-merge');
++ const common = require('./webpack.common.js');
++ const webpack = require('webpack');
++ 
++ module.exports = merge(common, {
++     devtool: 'inline-source-map',
++     devServer: {
++         contentBase: './dist',
++         hot: true
++     },
++     plugins: [
++         new webpack.HotModuleReplacementPlugin()
++     ],
++     mode: 'development'
++ });
+```
+
+webpack.prod.js
+
+```
++ const merge = require('webpack-merge');
++ const common = require('./webpack.common.js');
++
++ module.exports = merge(common,{
++     mode: 'production'
++ });
+```
+
+## npm scripts 
+
+让 npm start script 中 webpack-dev-server 使用 development(开发环境) 配置文件，而让 npm run build script 使用 production(生产环境) 配置文件：
+
+package.json
+```
+  {
+    ...
+    
+    "scripts": {
+-     "start": "webpack-dev-server --open",
++     "start": "webpack-dev-server --open --config webpack.dev.js",
+-     "build": "webpack"
++     "build": "webpack --config webpack.prod.js"
+    },
+    
+    ...
+    
+  }
+```
+
+## 指定 mode 
+
+许多 library 通过与 process.env.NODE_ENV 环境变量关联，以决定 library 中应该引用哪些内容。例如，当不处于生产环境中时，某些 library 为了使调试变得容易，可能会添加额外的 log(日志记录) 和 test(测试) 功能。并且，在使用 process.env.NODE_ENV === 'production' 时，一些 library 可能针对具体用户的环境，删除或添加一些重要代码，以进行代码执行方面的优化。
+
+从 webpack v4 开始, 指定 mode 会自动地配置 DefinePlugin：
+
+webpack.prod.js
+```
+  const merge = require('webpack-merge');
+  const common = require('./webpack.common.js');
+
+  module.exports = merge(common, {
+    mode: 'production',
+  });
+``` 
+
+技术上讲，NODE_ENV 是一个由 Node.js 暴露给执行脚本的系统环境变量。通常用于决定在开发环境与生产环境(dev-vs-prod)下，server tools(服务期工具)、build scripts(构建脚本) 和 client-side libraries(客户端库) 的行为。
+
+> 然而，与预期相反，无法在构建脚本 webpack.config.js 中，将 process.env.NODE_ENV 设置为 "production"，请查看 #2537。因此，在 webpack 配置文件中，process.env.NODE_ENV === 'production' ? '[name].[hash].bundle.js' : '[name].bundle.js' 这样的条件语句，无法按照预期运行。
+
+> 任何位于 /src 的本地代码都可以关联到 process.env.NODE_ENV 环境变量，所以以下检查也是有效的：
+
+src/index.js
+```
+  import { cube } from './math.js';
++
++ if (process.env.NODE_ENV !== 'production') {
++   console.log('Looks like we are in development mode!');
++ }
+
+  function component() {
+    var element = document.createElement('pre');
+
+    element.innerHTML = [
+      'Hello webpack!',
+      '5 cubed is equal to ' + cube(5)
+    ].join('\n\n');
+
+    return element;
+  }
+
+  document.body.appendChild(component());
+```
+
+## minification(压缩) 
+
+设置 production mode 配置后，webpack v4+ 会默认压缩你的代码。
+
+> 注意，虽然生产环境下默认使用 TerserPlugin ，并且也是代码压缩方面比较好的选择，但是还有一些其他可选择项。以下有几个同样很受欢迎的插件：
+> * BabelMinifyWebpackPlugin
+> * ClosureCompilerPlugin
+> 如果决定尝试一些其他压缩插件，只要确保新插件也会按照 tree shake 指南中所陈述的具有删除未引用代码(dead code)的能力，以及提供 optimization.minimizer。
+
 # 入口(entry)
 
 * 指示 webpack 应该使用哪个模块，来作为构建其内部依赖图的开始。
