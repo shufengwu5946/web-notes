@@ -806,6 +806,76 @@ webpack.prod.js
 
 将生产环境下的 CSS 进行压缩会非常重要，请查看 [在生产环境下压缩](https://webpack.docschina.org/plugins/mini-css-extract-plugin/#minimizing-for-production) 章节。
 
+## CLI 替代选项 
+
+* --optimize-minimize 标记将在幕后引用 TerserPlugin。
+* 和以上描述的 DefinePlugin 实例相同，--define process.env.NODE_ENV="'production'" 也会做同样的事情。
+* webpack -p 将自动地配置上述这两个标记，从而调用需要引入的插件。
+
+# 代码分离
+
+代码分离是 webpack 中最引人注目的特性之一。此特性能够把代码分离到不同的 bundle 中，然后可以按需加载或并行加载这些文件。代码分离可以用于获取更小的 bundle，以及控制资源加载优先级，如果使用合理，会极大影响加载时间。
+
+常用的代码分离方法有三种：
+
+* 入口起点：使用 entry 配置手动地分离代码。
+* 防止重复：使用 SplitChunksPlugin 去重和分离 chunk。
+* 动态导入：通过模块中的内联函数调用来分离代码。
+
+## 入口起点(entry points) 
+
+正如前面提到的，这种方式存在一些隐患：
+
+* 如果入口 chunk 之间包含一些重复的模块，那些重复模块都会被引入到各个 bundle 中。
+* 这种方法不够灵活，并且不能动态地将核心应用程序逻辑中的代码拆分出来。
+
+这两点中的第一点，对我们的示例来说毫无疑问是个严重问题，因为我们在 ./src/index.js 中也引入过 lodash，这样就造成在两个 bundle 中重复引用。我们可以通过使用 SplitChunksPlugin 插件来移除重复模块。
+
+## 防止重复(prevent duplication) 
+
+SplitChunksPlugin 插件可以将公共的依赖模块提取到已有的 entry chunk 中，或者提取到一个新生成的 chunk。让我们使用这个插件，将前面示例中重复的 lodash 模块去除：
+
+CommonsChunkPlugin 已经从 webpack v4（代号 legato）中移除。想要了解最新版本是如何处理 chunk，请查看 SplitChunksPlugin。
+
+webpack.config.js
+```
+  const path = require('path');
+
+  module.exports = {
+    mode: 'development',
+    entry: {
+      index: './src/index.js',
+      another: './src/another-module.js'
+    },
+    output: {
+      filename: '[name].bundle.js',
+      path: path.resolve(__dirname, 'dist')
+    },
++   optimization: {
++     splitChunks: {
++       chunks: 'all'
++     }
++   }
+  };
+```
+
+以下是由社区提供，一些对于代码分离很有帮助的 plugin 和 loader：
+```
+mini-css-extract-plugin：用于将 CSS 从主应用程序中分离。
+bundle-loader：用于分离代码和延迟加载生成的 bundle。
+promise-loader：类似于 bundle-loader ，但是使用了 promise API。
+```
+
+## 预取/预加载模块(prefetch/preload module) ?????????????????????????????????????????????????????????????????
+
+## bundle 分析(bundle analysis) 
+如果我们以分离代码作为开始，那么就应该以检查模块的输出结果作为结束，对其进行分析是很有用处的。[官方提供分析工具](https://github.com/webpack/analyse) 是一个好的初始选择。下面是一些可选择的社区支持(community-supported)工具：
+
+* webpack-chart：webpack stats 可交互饼图。
+* webpack-visualizer：可视化并分析你的 bundle，检查哪些模块占用空间，哪些可能是重复使用的。
+* webpack-bundle-analyzer：一个 plugin 和 CLI 工具，它将 bundle 内容展示为便捷的、交互式、可缩放的树状图形式。
+* webpack bundle optimize helper：此工具会分析你的 bundle，并为你提供可操作的改进措施建议，以减少 bundle 体积大小。
+
 # 入口(entry)
 
 * 指示 webpack 应该使用哪个模块，来作为构建其内部依赖图的开始。
