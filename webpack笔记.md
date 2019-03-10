@@ -876,6 +876,9 @@ promise-loader：类似于 bundle-loader ，但是使用了 promise API。
 * webpack-bundle-analyzer：一个 plugin 和 CLI 工具，它将 bundle 内容展示为便捷的、交互式、可缩放的树状图形式。
 * webpack bundle optimize helper：此工具会分析你的 bundle，并为你提供可操作的改进措施建议，以减少 bundle 体积大小。
 
+# 懒加载
+
+
 # 入口(entry)
 
 * 指示 webpack 应该使用哪个模块，来作为构建其内部依赖图的开始。
