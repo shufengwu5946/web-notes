@@ -57,7 +57,6 @@ v // ReferenceError: v is not defined
 typeof v // "undefined"
 ```
 > 上面代码中，变量v没有用var命令声明，直接使用就会报错。但是，放在typeof后面，就不报错了，而是返回undefined。
-
 > 实际编程中，这个特点通常用在判断语句。
 ```
 // 错误的写法
