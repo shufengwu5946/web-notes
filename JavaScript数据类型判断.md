@@ -4,7 +4,7 @@
 - [数据类型判断方法](#数据类型判断方法)
   - [typeof 运算符](#typeof-运算符)
   - [instanceof运算符](#instanceof运算符)
-  - [Object.prototype.toString方法](#Object.prototype.toString方法)
+  - [Object.prototype.toString方法](#Object-prototype-toString方法)
 
 ## JavaScript 的数据类型
 
