@@ -28,10 +28,48 @@ JavaScript 有三种方法，可以确定一个值到底是什么类型。
 
 ### typeof 运算符
 
+* 数值、字符串、布尔值分别返回number、string、boolean。
+* 函数返回function。
+* undefined返回undefined
+* 对象返回object
+* null返回object
+
 ```javascript
 typeof 123 // "number"
 typeof '123' // "string"
 typeof false // "boolean"
+
+function f() {}
+typeof f // "function"
+
+typeof undefined // "undefined"
+
+typeof window // "object"
+typeof {} // "object"
+typeof [] // "object"
+
+typeof null // "object"
+```
+
+> typeof可以用来检查一个没有声明的变量，而不报错。
+```
+v // ReferenceError: v is not defined
+typeof v // "undefined"
+```
+> 上面代码中，变量v没有用var命令声明，直接使用就会报错。但是，放在typeof后面，就不报错了，而是返回undefined。
+
+> 实际编程中，这个特点通常用在判断语句。
+```
+// 错误的写法
+if (v) {
+  // ...
+}
+// ReferenceError: v is not defined
+
+// 正确的写法
+if (typeof v === "undefined") {
+  // ...
+}
 ```
 
 ### instanceof运算符
