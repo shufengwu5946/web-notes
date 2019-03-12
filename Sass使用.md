@@ -1,4 +1,7 @@
 # Sass使用
+
+https://www.sasscss.com/getting-started/
+
 ## 使用变量
 ```
 $highlight-color: #F90;
@@ -103,4 +106,77 @@ nav, aside {
 nav a, aside a {color: blue}
 ```
 
+子组合选择器和同层组合选择器：>、+和~:
+
+```css
+// 选择article下的所有命中section选择器的元素
+article section { margin: 5px }
+
+// 选择article下紧跟着的子元素中命中section选择器的元素
+article > section { border: 1px solid #ccc }
+
+// 用同层相邻组合选择器+选择header元素后紧跟的p元素
+header + p { font-size: 1.1em }
+
+// 同层全体组合选择器~，选择所有跟在article后的同层article元素，不管它们之间隔了多少其他元素
+article ~ article { border-top: 1px dashed #ccc }
+```
+
+这些组合选择器可以毫不费力地应用到sass的规则嵌套中
+```
+article {
+  ~ article { border-top: 1px dashed #ccc }
+  > section { background: #eee }
+  dl > {
+    dt { color: #333 }
+    dd { color: #555 }
+  }
+  nav + & { margin-top: 0 }
+}
+
+// 编译后
+article ~ article { border-top: 1px dashed #ccc }
+article > footer { background: #eee }
+article dl > dt { color: #333 }
+article dl > dd { color: #555 }
+nav + article { margin-top: 0 }
+```
+
+嵌套属性：
+```
+nav {
+  border: {
+  style: solid;
+  width: 1px;
+  color: #ccc;
+  }
+}
+```
+嵌套属性的规则是这样的：把属性名从中划线-的地方断开，在根属性后边添加一个冒号:，紧跟一个{ }块，把子属性部分写在这个{ }块中。就像css选择器嵌套一样，sass会把你的子属性一一解开，把根属性和子属性部分通过中划线-连接起来，最后生成的效果与你手动一遍遍写的css样式一样：
+```
+nav {
+  border-style: solid;
+  border-width: 1px;
+  border-color: #ccc;
+}
+```
+对于属性的缩写形式，你甚至可以像下边这样来嵌套，指明例外规则：
+```
+nav {
+  border: 1px solid #ccc {
+  left: 0px;
+  right: 0px;
+  }
+}
+```
+这比下边这种同等样式的写法要好：
+```
+nav {
+  border: 1px solid #ccc;
+  border-left: 0px;
+  border-right: 0px;
+}
+```
+
+## 导入SASS文件
 
