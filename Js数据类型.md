@@ -131,3 +131,114 @@ Number(null) // 0
 ```
 对象：
 
+第一步，调用对象自身的valueOf方法。如果返回原始类型的值，则直接对该值使用Number函数，不再进行后续步骤。
+
+第二步，如果valueOf方法返回的还是对象，则改为调用对象自身的toString方法。如果toString方法返回原始类型的值，则对该值使用Number函数，不再进行后续步骤。
+
+第三步，如果toString方法返回的是对象，就报错。
+
+#### String()
+
+原始类型：
+
+数值：转为相应的字符串。
+字符串：转换后还是原来的值。
+布尔值：true转为字符串"true"，false转为字符串"false"。
+undefined：转为字符串"undefined"。
+null：转为字符串"null"。
+
+```javascript
+String(123) // "123"
+String('abc') // "abc"
+String(true) // "true"
+String(undefined) // "undefined"
+String(null) // "null"
+```
+
+对象：
+
+1. 先调用对象自身的toString方法。如果返回原始类型的值，则对该值使用String函数，不再进行以下步骤。
+
+2. 如果toString方法返回的是对象，再调用原对象的valueOf方法。如果valueOf方法返回原始类型的值，则对该值使用String函数，不再进行以下步骤。
+
+3. 如果valueOf方法返回的是对象，就报错。
+
+#### Boolean()
+
+转换规则相对简单：除了以下五个值的转换结果为false，其他的值全部为true。
+
+* undefined
+* null
+* 0（包含-0和+0）
+* NaN
+* ''（空字符串）
+
+### 自动类型转换
+#### 自动转换为布尔
+#### 自动转换为字符串
+```javascript
+'5' + 1 // '51'
+'5' + true // "5true"
+'5' + false // "5false"
+'5' + {} // "5[object Object]"
+'5' + [] // "5"
+'5' + function (){} // "5function (){}"
+'5' + undefined // "5undefined"
+'5' + null // "5null"
+```
+#### 自动转换为数值
+除了加法运算符（+）有可能把运算子转为字符串，其他运算符都会把运算子自动转成数值。
+```javascript
+'5' - '2' // 3
+'5' * '2' // 10
+true - 1  // 0
+false - 1 // -1
+'1' - 1   // 0
+'5' * []    // 0
+false / '5' // 0
+'abc' - 1   // NaN
+null + 1 // 1
+undefined + 1 // NaN
++'abc' // NaN
+-'abc' // NaN
++true // 1
+-false // 0
+```
+
+#### 对象转原始类型
+对象在转换类型的时候，会调用内置的 [[ToPrimitive]] 函数
+```
+let a = {
+  valueOf() {
+    return 0
+  },
+  toString() {
+    return '1'
+  },
+  [Symbol.toPrimitive]() {
+    return 2
+  }
+}
+1 + a // => 3
+```
+#### 其他例子
+```javascript
+'a' + + 'b' // -> "aNaN"
+````
+
+比较运算符:
+
+如果是对象，就通过 toPrimitive 转换对象
+
+如果是字符串，就通过 unicode 字符索引来比较
+```javascript
+let a = {
+  valueOf() {
+    return 0
+  },
+  toString() {
+    return '1'
+  }
+}
+a > -1 // true
+```
