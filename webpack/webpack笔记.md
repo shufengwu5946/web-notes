@@ -10,7 +10,9 @@
 
 本质上，webpack 是一个现代 JavaScript 应用程序的静态模块打包器(module bundler)。当 webpack 处理应用程序时，它会递归地构建一个依赖关系图(dependency graph)，其中包含应用程序需要的每个模块，然后将所有这些模块打包成一个或多个 bundle。
 
-示意图：https://www.webpackjs.com/
+示意图：
+
+![](./imgs/webpack.png)
 
 关键概念：
 
@@ -328,7 +330,7 @@ webpack.config.js
       ]
     }
   };  
-``` 
+```
 
 现在，你可以 import 这四种类型的数据(JSON, CSV, TSV, XML)中的任何一种。
 
@@ -745,7 +747,7 @@ webpack.prod.js
   module.exports = merge(common, {
     mode: 'production',
   });
-``` 
+```
 
 技术上讲，NODE_ENV 是一个由 Node.js 暴露给执行脚本的系统环境变量。通常用于决定在开发环境与生产环境(dev-vs-prod)下，server tools(服务期工具)、build scripts(构建脚本) 和 client-side libraries(客户端库) 的行为。
 
