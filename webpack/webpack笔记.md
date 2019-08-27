@@ -33,29 +33,30 @@
 
 安装最新版本
 
-```
+```bash
 npm install --save-dev webpack
 ```
 
 安装指定版本
 
-```
+```bash
 npm install --save-dev webpack@<version>
 ```
 
 如果你使用 webpack 4+ 版本，你还需要安装 CLI。
 
-```
+```bash
 npm install --save-dev webpack-cli
 ```
 
-# Getting started
+## Getting started
 
 创建项目目录。
 
 执行如下命令:
 
-```
+```bash
+// -y就是yes的意思，在init的时候省去了敲回车的步骤，生成的默认的package.json
 npm init -y
 npm install webpack webpack-cli --save-dev
 ```
