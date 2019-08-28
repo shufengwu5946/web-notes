@@ -1,11 +1,3 @@
-# 目录
-
-- [概念](#概念)
-- [安装](#安装)
-- [Getting started](#Getting-started)
-  - [实现最简项目](#实现最简项目)
-- [管理资源](#管理资源)
-
 # 概念
 
 本质上，webpack 是一个现代 JavaScript 应用程序的静态模块打包器(module bundler)。当 webpack 处理应用程序时，它会递归地构建一个依赖关系图(dependency graph)，其中包含应用程序需要的每个模块，然后将所有这些模块打包成一个或多个 bundle。
@@ -76,6 +68,7 @@ wp
 |- /node_modules
 ```
 **webpack.config.js:**
+
 ```
 const path = require('path');
 
@@ -191,6 +184,14 @@ function component() {
 document.body.appendChild(component());
 ```
 
+### css提取？？？
+
+### postcss ？？？
+
+### less ？？？
+
+### sass ？？？
+
 ## 加载图片
 
 使用 file-loader，我们可以轻松地将这些内容混合到 CSS 中：
@@ -252,6 +253,10 @@ src/style.css
 +   background: url('./icon.png');
   }
 ```
+### image-webpack-loader？？？
+
+### url-loader？？？
+
 ## 加载字体
 
 那么，像字体这样的其他资源如何处理呢？file-loader 和 url-loader 可以接收并加载任何文件，然后将其输出到构建目录。这就是说，我们可以将它们用于任何类型的文件，包括字体。
@@ -295,6 +300,8 @@ src/style.css
     background: url('./icon.png');
   }
 ```
+> https://www.fontsquirrel.com/tools/webfont-generator 可以转换字体为浏览器可以识别的字体。
+
 ## 加载数据
 
 * 可以加载的有用资源还有数据，如 JSON 文件，CSV、TSV 和 XML。
@@ -335,6 +342,10 @@ webpack.config.js
 
 现在，你可以 import 这四种类型的数据(JSON, CSV, TSV, XML)中的任何一种。
 
+## 全局资源
+
+### alias？？？
+
 # 管理输出
 
 到目前为止，我们在 index.html 文件中手动引入所有资源，然而随着应用程序增长，并且一旦开始对文件名使用哈希(hash)]并输出多个 bundle，手动地对 index.html 文件进行管理，一切就会变得困难起来。然而，可以通过一些插件，会使这个过程更容易操控。
@@ -366,6 +377,8 @@ webpack.config.js
 HtmlWebpackPlugin 还是会默认生成 index.html 文件。这就是说，它会用新生成的 index.html 文件，把我们的原来的替换。
 
 执行npm run build后，如果你在代码编辑器中将 index.html 打开，你就会看到 HtmlWebpackPlugin 创建了一个全新的文件，所有的 bundle 会自动添加到 html 中。
+
+###  html-webpack-template？？？
 
 ## 清理 /dist 文件夹 
 
