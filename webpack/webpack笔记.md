@@ -1,11 +1,3 @@
-# 目录
-
-- [概念](#概念)
-- [安装](#安装)
-- [Getting started](#Getting-started)
-  - [实现最简项目](#实现最简项目)
-- [管理资源](#管理资源)
-
 # 概念
 
 本质上，webpack 是一个现代 JavaScript 应用程序的静态模块打包器(module bundler)。当 webpack 处理应用程序时，它会递归地构建一个依赖关系图(dependency graph)，其中包含应用程序需要的每个模块，然后将所有这些模块打包成一个或多个 bundle。
@@ -76,6 +68,7 @@ wp
 |- /node_modules
 ```
 **webpack.config.js:**
+
 ```
 const path = require('path');
 
@@ -191,6 +184,14 @@ function component() {
 document.body.appendChild(component());
 ```
 
+### css提取？？？
+
+### postcss ？？？
+
+### less ？？？
+
+### sass ？？？
+
 ## 加载图片
 
 使用 file-loader，我们可以轻松地将这些内容混合到 CSS 中：
@@ -252,6 +253,10 @@ src/style.css
 +   background: url('./icon.png');
   }
 ```
+### image-webpack-loader？？？
+
+### url-loader？？？
+
 ## 加载字体
 
 那么，像字体这样的其他资源如何处理呢？file-loader 和 url-loader 可以接收并加载任何文件，然后将其输出到构建目录。这就是说，我们可以将它们用于任何类型的文件，包括字体。
@@ -295,6 +300,8 @@ src/style.css
     background: url('./icon.png');
   }
 ```
+> https://www.fontsquirrel.com/tools/webfont-generator 可以转换字体为浏览器可以识别的字体。
+
 ## 加载数据
 
 * 可以加载的有用资源还有数据，如 JSON 文件，CSV、TSV 和 XML。
@@ -335,6 +342,10 @@ webpack.config.js
 
 现在，你可以 import 这四种类型的数据(JSON, CSV, TSV, XML)中的任何一种。
 
+## 全局资源
+
+### alias？？？
+
 # 管理输出
 
 到目前为止，我们在 index.html 文件中手动引入所有资源，然而随着应用程序增长，并且一旦开始对文件名使用哈希(hash)]并输出多个 bundle，手动地对 index.html 文件进行管理，一切就会变得困难起来。然而，可以通过一些插件，会使这个过程更容易操控。
@@ -366,6 +377,8 @@ webpack.config.js
 HtmlWebpackPlugin 还是会默认生成 index.html 文件。这就是说，它会用新生成的 index.html 文件，把我们的原来的替换。
 
 执行npm run build后，如果你在代码编辑器中将 index.html 打开，你就会看到 HtmlWebpackPlugin 创建了一个全新的文件，所有的 bundle 会自动添加到 html 中。
+
+###  html-webpack-template？？？
 
 ## 清理 /dist 文件夹 
 
@@ -400,7 +413,9 @@ webpack.config.js
 ```
 现在执行 npm run build，再检查 /dist 文件夹。如果一切顺利，你现在应该不会再看到旧的文件，只有构建后生成的文件！
 
-## Manifest?????????????????????????????????????????????????????
+## manifest？？？
+
+#### WebpackManifestPlugin？？？
 
 # 开发环境
 
@@ -528,11 +543,110 @@ package.json
 ```
 现在，我们可以在命令行中运行 npm start，就会看到浏览器自动加载页面。如果现在修改和保存任意源文件，web 服务器就会自动重新加载编译后的代码。
 
-#### Hot Module Replacement?????????????????????????????????????????????????????????
+#### publicPath？？？
+
+#### Hot Module Replacement？？？
 
 ### 使用 webpack-dev-middleware
 
 webpack-dev-middleware 是一个容器(wrapper)，它可以把 webpack 处理后的文件传递给一个服务器(server)。 webpack-dev-server 在内部使用了它，然而它也可以作为一个单独的 package 来使用，以便根据需求进行更多自定义设置。
+
+首先，安装 `express` 和 `webpack-dev-middleware`：
+
+```bash
+npm install --save-dev express webpack-dev-middleware
+```
+
+现在，我们需要调整 webpack 配置文件，以确保 middleware(中间件) 功能能够正确启用：
+
+**webpack.config.js**
+
+```diff
+  const path = require('path');
+  const HtmlWebpackPlugin = require('html-webpack-plugin');
+  const CleanWebpackPlugin = require('clean-webpack-plugin');
+
+  module.exports = {
+    ...
+    output: {
+      filename: '[name].bundle.js',
+      path: path.resolve(__dirname, 'dist'),
++     publicPath: '/'
+    }
+  };
+```
+
+我们将会在 server 脚本使用 `publicPath`，以确保文件资源能够正确地 serve 在 `http://localhost:3000` 下，稍后我们会指定 port number(端口号)。接下来是设置自定义 `express` server：
+
+**project**
+
+```diff
+  webpack-demo
+  |- package.json
+  |- webpack.config.js
++ |- server.js
+  |- /dist
+  |- /src
+    |- index.js
+    |- print.js
+  |- /node_modules
+```
+
+**server.js**
+
+```javascript
+const express = require('express');
+const webpack = require('webpack');
+const webpackDevMiddleware = require('webpack-dev-middleware');
+
+const app = express();
+const config = require('./webpack.config.js');
+const compiler = webpack(config);
+
+// 告诉 express 使用 webpack-dev-middleware，
+// 以及将 webpack.config.js 配置文件作为基础配置
+app.use(webpackDevMiddleware(compiler, {
+  publicPath: config.output.publicPath
+}));
+
+// 将文件 serve 到 port 3000。
+app.listen(3000, function () {
+  console.log('Example app listening on port 3000!\n');
+});
+```
+
+现在，添加一个 npm script，以使我们更方便地运行服务：
+
+**package.json**
+
+```diff
+  {
+    ...
+    "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1",
+      "watch": "webpack --watch",
+      "start": "webpack-dev-server --open",
++     "server": "node server.js",
+      "build": "webpack"
+    },
+    ...
+  }
+```
+
+现在，在 terminal(终端) 中执行 `npm run server`，将会有类似如下信息输出：
+
+```bash
+Example app listening on port 3000!
+...
+          Asset       Size  Chunks                    Chunk Names
+  app.bundle.js    1.44 MB    0, 1  [emitted]  [big]  app
+print.bundle.js    6.57 kB       1  [emitted]         print
+     index.html  306 bytes          [emitted]
+...
+webpack: Compiled successfully.
+```
+
+现在，打开浏览器，访问 `http://localhost:3000`。应该看到webpack 应用程序已经运行！
 
 # 热模块替换
 
@@ -541,7 +655,7 @@ webpack-dev-middleware 是一个容器(wrapper)，它可以把 webpack 处理后
 此功能可以很大程度提高生产效率。
 
 webpack.config.js
-```
+```diff
   const path = require('path');
   const HtmlWebpackPlugin = require('html-webpack-plugin');
   const CleanWebpackPlugin = require('clean-webpack-plugin');
@@ -572,7 +686,98 @@ webpack.config.js
   };
 ```
 
+> 可以通过命令来修改 [webpack-dev-server](https://github.com/webpack/webpack-dev-server) *的配置：*`webpack-dev-server --hotOnly`
+
+现在，修改 `index.js` 文件，以便在 `print.js` 内部发生变更时，告诉 webpack 接受 updated module。
+
+```diff
+  import _ from 'lodash';
+  import printMe from './print.js';
+
+  function component() {
+    ...
+  }
+
+  document.body.appendChild(component());
++
++ if (module.hot) {
++   module.hot.accept('./print.js', function() {
++     console.log('Accepting the updated printMe module!');
++     printMe();
++   })
++ }
+```
+
+## 通过 Node.js API 
+
+在 Node.js API 中使用 webpack dev server 时，不要将 dev server 选项放在 webpack 配置对象(webpack config object)中。而是，在创建时，将其作为第二个参数传递。例如：
+
+```
+new WebpackDevServer(compiler, options)
+```
+
+想要启用 HMR，还需要修改 webpack 配置对象，使其包含 HMR 入口起点。`webpack-dev-server` package 中具有一个叫做 `addDevServerEntrypoints` 的方法，你可以通过使用这个方法来实现。这是关于如何使用的一个基本示例：
+
+**dev-server.js**
+
+```javascript
+const webpackDevServer = require('webpack-dev-server');
+const webpack = require('webpack');
+
+const config = require('./webpack.config.js');
+const options = {
+  contentBase: './dist',
+  hot: true,
+  host: 'localhost'
+};
+
+webpackDevServer.addDevServerEntrypoints(config, options);
+const compiler = webpack(config);
+const server = new webpackDevServer(compiler, options);
+
+server.listen(5000, 'localhost', () => {
+  console.log('dev server listening on port 5000');
+});
+```
+
+> 如果你正在使用 [`webpack-dev-middleware`](https://webpack.docschina.org/guides/development#using-webpack-dev-middleware)，可以通过 [`webpack-hot-middleware`](https://github.com/webpack-contrib/webpack-hot-middleware) package，在自定义 dev server 中启用 HMR。
+
+## 问题 
+
+模块热替换可能比较难以掌握。为了说明这一点，我们回到刚才的示例中。如果你继续点击示例页面上的按钮，你会发现控制台仍在打印旧的 `printMe` 函数。
+
+这是因为按钮的 `onclick` 事件处理函数仍然绑定在旧的 `printMe` 函数上。
+
+为了让 HMR 正常工作，我们需要更新代码，使用 `module.hot.accept` 将其绑定到新的 `printMe` 函数上：
+
+**index.js**
+
+```diff
+  import _ from 'lodash';
+  import printMe from './print.js';
+
+  function component() {
+    ...
+  }
+
+- document.body.appendChild(component());
++ let element = component(); // 存储 element，以在 print.js 修改时重新渲染
++ document.body.appendChild(element);
+
+  if (module.hot) {
+    module.hot.accept('./print.js', function() {
+      console.log('Accepting the updated printMe module!');
+-     printMe();
++     document.body.removeChild(element);
++     element = component(); // Re-render the "component" to update the click handler
++     element = component(); // 重新渲染 "component"，以便更新 click 事件处理函数
++     document.body.appendChild(element);
+    })
+  }
+```
+
 ## HMR 加载样式 
+
 借助于 style-loader，使用模块热替换来加载 CSS 实际上极其简单。此 loader 在幕后使用了 module.hot.accept，在 CSS 依赖模块更新之后，会将其 patch(修补) 到 <style> 标签中。
 
 安装loader ：
@@ -621,14 +826,91 @@ webpack.config.js
 
 ## 其他代码和框架 
 
+### React Hot Loader？？？
+
 社区还提供许多其他 loader 和示例，可以使 HMR 与各种框架和库平滑地进行交互……
 
-* **React Hot Loader：实时调整 react 组件。???????????????????????????????????????????????????????**
+* **React Hot Loader：实时调整 react 组件。**
 * Vue Loader：此 loader 支持 vue 组件的 HMR，提供开箱即用体验。
 * Elm Hot Loader：支持 Elm 编程语言的 HMR。
 * Angular HMR：没有必要使用 loader！直接修改 NgModule 主文件就够了，它可以完全控制 HMR API。
 
 # tree shaking
+
+*tree shaking* 是一个术语，通常用于描述移除 JavaScript 上下文中的未引用代码(dead-code)。它依赖于 ES2015 模块语法的 [静态结构](http://exploringjs.com/es6/ch_modules.html#static-module-structure) 特性，例如 [`import`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import) 和 [`export`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/export)。
+
+webpack 2 正式版本内置支持 ES2015 模块（也叫做 *harmony modules*）和未使用模块检测能力。新的 webpack 4 正式版本扩展了此检测能力，通过 `package.json` 的 `"sideEffects"` 属性作为标记，向 compiler 提供提示，表明项目中的哪些文件是 "pure(纯的 ES2015 模块)"，由此可以安全地删除文件中未使用的部分。
+
+## sideEffects
+
+在一个纯粹的 ESM 模块世界中，很容易识别出哪些文件有 side effect。然而，我们的项目无法达到这种纯度，所以，此时有必要提示 webpack compiler 哪些代码是“纯粹部分”。
+
+通过 package.json 的 `"sideEffects"` 属性，来实现这种方式。
+
+```json
+{
+  "name": "your-project",
+  "sideEffects": false
+}
+```
+
+如果所有代码都不包含 side effect，我们就可以简单地将该属性标记为 `false`，来告知 webpack，它可以安全地删除未用到的 export。
+
+> "side effect(副作用)" 的定义是，在导入时会执行特殊行为的代码，而不是仅仅暴露一个 export 或多个 export。举例说明，例如 polyfill，它影响全局作用域，并且通常不提供 export。
+
+如果你的代码确实有一些副作用，可以改为提供一个数组：
+
+```json
+{
+  "name": "your-project",
+  "sideEffects": [
+    "./src/some-side-effectful-file.js"
+  ]
+}
+```
+
+数组方式支持相对路径、绝对路径和 glob 模式匹配相关文件。它在内部使用 [micromatch](https://github.com/micromatch/micromatch#matching-features)。
+
+> 注意，所有导入文件都会受到 tree shaking 的影响。这意味着，如果在项目中使用类似 `css-loader` 并 import 一个 CSS 文件，则需要将其添加到 side effect 列表中，以免在生产模式中无意中将它删除：
+
+```json
+{
+  "name": "your-project",
+  "sideEffects": [
+    "./src/some-side-effectful-file.js",
+    "*.css"
+  ]
+}
+```
+
+最后，还可以在 [`module.rules` 配置选项](https://webpack.docschina.org/configuration/module/#module-rules) 中设置 `"sideEffects"`。
+
+### micromatch？？？
+
+## 压缩输出结果
+
+通过 `import` 和 `export` 语法，我们已经找出需要删除的“未引用代码(dead code)”，然而，不仅仅是要找出，还要在 bundle 中删除它们。为此，我们需要将 `mode` 配置选项设置为 [`production`](https://webpack.docschina.org/concepts/mode/#mode-production)。
+
+> 注意，也可以在命令行接口中使用 `--optimize-minimize` 标记，来启用 `TerserPlugin`。
+
+准备就绪后，然后运行另一个 npm script `npm run build`，看看输出结果是否发生改变。
+
+> 运行 tree shaking 需要 [ModuleConcatenationPlugin](https://webpack.docschina.org/plugins/module-concatenation-plugin)。通过 `mode: "production"` 可以添加此插件。如果你没有使用 mode 设置，记得手动添加 [ModuleConcatenationPlugin](https://webpack.docschina.org/plugins/module-concatenation-plugin)。
+
+### TerserPlugin？？？
+
+### ModuleConcatenationPlugin ？？？
+
+
+
+想要使用 *tree shaking* 必须注意以下……
+
+- 使用 ES2015 模块语法（即 `import` 和 `export`）。
+- 确保没有 compiler 将 ES2015 模块语法转换为 CommonJS 模块（这也是流行的 Babel preset 中 @babel/preset-env 的默认行为 - 更多详细信息请查看 [文档](https://babel.docschina.org/docs/en/babel-preset-env#modules)）。
+- 在项目 `package.json` 文件中，添加一个 "sideEffects" 属性。
+- 通过将 `mode` 选项设置为 [`production`](https://webpack.docschina.org/concepts/mode/#mode-production)，启用 minification(代码压缩) 和 tree shaking。
+
+> 你可以将应用程序想象成一棵树。绿色表示实际用到的 source code(源码) 和 library(库)，是树上活的树叶。灰色表示未引用代码，是秋天树上枯萎的树叶。为了除去死去的树叶，你必须摇动这棵树，使它们落下。
 
 # 生产环境
 
