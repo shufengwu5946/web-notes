@@ -13,6 +13,8 @@
 * loader
 * 插件(plugins)
 
+
+
 # 安装
 
 在开始之前，请确保安装了 **Node.js** 的最**新版本**。
@@ -121,6 +123,8 @@ document.body.appendChild(component());
 }
 ```
 执行 npm run build 命令，在dist目录下生成main.js文件。
+
+
 
 # 管理资源
 
@@ -257,6 +261,8 @@ src/style.css
 
 ### url-loader？？？
 
+### html-loader？？？
+
 ## 加载字体
 
 那么，像字体这样的其他资源如何处理呢？file-loader 和 url-loader 可以接收并加载任何文件，然后将其输出到构建目录。这就是说，我们可以将它们用于任何类型的文件，包括字体。
@@ -346,6 +352,8 @@ webpack.config.js
 
 ### alias？？？
 
+
+
 # 管理输出
 
 到目前为止，我们在 index.html 文件中手动引入所有资源，然而随着应用程序增长，并且一旦开始对文件名使用哈希(hash)]并输出多个 bundle，手动地对 index.html 文件进行管理，一切就会变得困难起来。然而，可以通过一些插件，会使这个过程更容易操控。
@@ -415,7 +423,9 @@ webpack.config.js
 
 ## manifest？？？
 
-#### WebpackManifestPlugin？？？
+### WebpackManifestPlugin？？？
+
+
 
 # 开发环境
 
@@ -648,6 +658,8 @@ webpack: Compiled successfully.
 
 现在，打开浏览器，访问 `http://localhost:3000`。应该看到webpack 应用程序已经运行！
 
+
+
 # 热模块替换
 
 ## 启用 HMR 
@@ -835,6 +847,8 @@ webpack.config.js
 * Elm Hot Loader：支持 Elm 编程语言的 HMR。
 * Angular HMR：没有必要使用 loader！直接修改 NgModule 主文件就够了，它可以完全控制 HMR API。
 
+
+
 # tree shaking
 
 *tree shaking* 是一个术语，通常用于描述移除 JavaScript 上下文中的未引用代码(dead-code)。它依赖于 ES2015 模块语法的 [静态结构](http://exploringjs.com/es6/ch_modules.html#static-module-structure) 特性，例如 [`import`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/import) 和 [`export`](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/export)。
@@ -927,13 +941,13 @@ webpack 2 正式版本内置支持 ES2015 模块（也叫做 *harmony modules*�
 保留一个 "common(通用)" 配置。为了将这些配置合并在一起，我们将使用一个名为 webpack-merge 的工具。此工具会引用 "common" 配置，因此我们不必再在环境特定(environment-specific)的配置中编写重复代码。
 
 我们先从安装 webpack-merge ：
-```
+```bash
 npm install --save-dev webpack-merge
 ```
 
 project
 
-```
+```diff
 - |- webpack.config.js
 + |- webpack.common.js
 + |- webpack.dev.js
@@ -942,7 +956,7 @@ project
 
 webpack.common.js
 
-```
+```diff
 + const path = require('path');
 + const HtmlWebpackPlugin = require('html-webpack-plugin');
 + const CleanWebpackPlugin = require('clean-webpack-plugin');
@@ -966,7 +980,7 @@ webpack.common.js
 
 webpack.dev.js
 
-```
+```diff
 + const merge = require('webpack-merge');
 + const common = require('./webpack.common.js');
 + const webpack = require('webpack');
@@ -986,7 +1000,7 @@ webpack.dev.js
 
 webpack.prod.js
 
-```
+```diff
 + const merge = require('webpack-merge');
 + const common = require('./webpack.common.js');
 +
@@ -1000,7 +1014,7 @@ webpack.prod.js
 让 npm start script 中 webpack-dev-server 使用 development(开发环境) 配置文件，而让 npm run build script 使用 production(生产环境) 配置文件：
 
 package.json
-```
+```diff json
   {
     ...
     
@@ -1039,7 +1053,7 @@ webpack.prod.js
 > 任何位于 /src 的本地代码都可以关联到 process.env.NODE_ENV 环境变量，所以以下检查也是有效的：
 
 src/index.js
-```
+```diff
   import { cube } from './math.js';
 +
 + if (process.env.NODE_ENV !== 'production') {
@@ -1069,13 +1083,15 @@ src/index.js
 > * ClosureCompilerPlugin
 > 如果决定尝试一些其他压缩插件，只要确保新插件也会按照 tree shake 指南中所陈述的具有删除未引用代码(dead code)的能力，以及提供 optimization.minimizer。
 
+### optimization.minimizer？？？
+
 ## source mapping(源码映射)
 
 我们鼓励你在生产环境中启用 source map，因为它们对 debug(调试源码) 和运行 benchmark tests(基准测试) 很有帮助。虽然有着如此强大的功能，然而还是应该针对生产环境用途，选择一个可以快速构建的推荐配置（更多选项请查看 devtool）。对于本指南，我们将在生产环境中使用 source-map 选项，而不是我们在开发环境中用到的 inline-source-map：
 
 webpack.prod.js
 
-```
+```diff
   const merge = require('webpack-merge');
   const common = require('./webpack.common.js');
 
@@ -1087,7 +1103,11 @@ webpack.prod.js
 
 > 避免在生产中使用 inline-*** 和 eval-***，因为它们会增加 bundle 体积大小，并降低整体性能。
 
-## 最小化 CSS ????????????????????????????????????????????????????????????????????????
+### benchmark tests(基准测试)？？？
+
+### devtool？？？
+
+## 最小化 CSS ？？？
 
 将生产环境下的 CSS 进行压缩会非常重要，请查看 [在生产环境下压缩](https://webpack.docschina.org/plugins/mini-css-extract-plugin/#minimizing-for-production) 章节。
 
@@ -1096,6 +1116,8 @@ webpack.prod.js
 * --optimize-minimize 标记将在幕后引用 TerserPlugin。
 * 和以上描述的 DefinePlugin 实例相同，--define process.env.NODE_ENV="'production'" 也会做同样的事情。
 * webpack -p 将自动地配置上述这两个标记，从而调用需要引入的插件。
+
+> 通常我们建议只使用配置方式，因为在这两种方式中，配置方式能够更准确地理解现在正在做的事情。配置方式还为可以让你更加细微地控制这两个插件中的其他选项。
 
 # 代码分离
 
@@ -1123,7 +1145,7 @@ SplitChunksPlugin 插件可以将公共的依赖模块提取到已有的 entry c
 CommonsChunkPlugin 已经从 webpack v4（代号 legato）中移除。想要了解最新版本是如何处理 chunk，请查看 SplitChunksPlugin。
 
 webpack.config.js
-```
+```diff
   const path = require('path');
 
   module.exports = {
@@ -1145,13 +1167,113 @@ webpack.config.js
 ```
 
 以下是由社区提供，一些对于代码分离很有帮助的 plugin 和 loader：
-```
-mini-css-extract-plugin：用于将 CSS 从主应用程序中分离。
-bundle-loader：用于分离代码和延迟加载生成的 bundle。
-promise-loader：类似于 bundle-loader ，但是使用了 promise API。
+> * mini-css-extract-plugin：用于将 CSS 从主应用程序中分离。
+> * bundle-loader：用于分离代码和延迟加载生成的 bundle。
+> * promise-loader：类似于 bundle-loader ，但是使用了 promise API。
+
+### mini-css-extract-plugin？？？
+
+### bundle-loader？？？
+
+### promise-loader？？？
+
+## 动态导入
+
+当涉及到动态代码拆分时，webpack 提供了两个类似的技术。
+
+* 第一种，也是推荐选择的方式是，使用符合 [ECMAScript 提案](https://github.com/tc39/proposal-dynamic-import) 的 [`import()` 语法](https://webpack.docschina.org/api/module-methods#import-) 来实现动态导入。
+
+* 第二种，则是 webpack 的遗留功能，使用 webpack 特定的 [`require.ensure`](https://webpack.docschina.org/api/module-methods#require-ensure)
+
+### import动态加载
+
+> `import()` *调用会在内部用到* [promises](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Promise)*。如果在旧版本浏览器中使用* `import()`*，记得使用一个 polyfill 库（例如* [es6-promise](https://github.com/stefanpenner/es6-promise) *或* [promise-polyfill](https://github.com/taylorhakes/promise-polyfill)*），来 shim* `Promise`*。*
+
+**webpack.config.js**
+
+```diff
+  const path = require('path');
+
+  module.exports = {
+    mode: 'development',
+    entry: {
+      index: './src/index.js'
+    },
+    output: {
+      filename: '[name].bundle.js',
++     chunkFilename: '[name].bundle.js',
+      path: path.resolve(__dirname, 'dist')
+    }
+  };
 ```
 
-## 预取/预加载模块(prefetch/preload module) ?????????????????????????????????????????????????????????????????
+> 注意，这里使用了 `chunkFilename`，它决定 non-entry chunk(非入口 chunk) 的名称。
+
+现在，我们不再使用 statically import(静态导入) `lodash`，而是通过 dynamic import(动态导入) 来分离出一个 chunk：
+
+**src/index.js**
+
+```javascript
+function getComponent() {
+  return import(/* webpackChunkName: "lodash" */ 'lodash')
+    .then(({ default: _ }) => {
+      var element = document.createElement('div');
+      element.innerHTML = _.join(['Hello', 'webpack'], ' ');
+      return element;
+    }).catch(error => 'An error occurred while loading the component');
+  }
+
+getComponent().then(component => {
+  document.body.appendChild(component);
+})
+```
+
+
+
+注意，在注释中我们提供了 `webpackChunkName`。这样会将拆分出来的 bundle 命名为 `lodash.bundle.js`，而不是 `[id].bundle.js`。想了解更多关于 `webpackChunkName` 和其他可用选项，请查看 [`import()`](https://webpack.docschina.org/api/module-methods/#import-) 文档。让我们执行 webpack，看到 `lodash` 分离出一个单独的 bundle：
+
+```bash
+...
+                   Asset      Size          Chunks             Chunk Names
+         index.bundle.js  7.88 KiB           index  [emitted]  index
+vendors~lodash.bundle.js   547 KiB  vendors~lodash  [emitted]  vendors~lodash
+Entrypoint index = index.bundle.js
+...
+```
+
+由于 `import()` 会返回一个 promise，因此它可以和 [`async` 函数](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Statements/async_function)一起使用。但是，需要使用像 Babel 这样的预处理器和 [Syntax Dynamic Import Babel Plugin](https://babel.docschina.org/docs/en/babel-plugin-syntax-dynamic-import/#installation)。下面是如何通过 async 函数简化代码：
+
+#### Syntax Dynamic Import Babel Plugin？？？
+
+**src/index.js**
+
+```diff
+- function getComponent() {
++ async function getComponent() {
+-   return import(/* webpackChunkName: "lodash" */ 'lodash').then({ default: _ } => {
+-     var element = document.createElement('div');
+-
+-     element.innerHTML = _.join(['Hello', 'webpack'], ' ');
+-
+-     return element;
+-
+-   }).catch(error => 'An error occurred while loading the component');
++   var element = document.createElement('div');
++   const { default: _ } = await import(/* webpackChunkName: "lodash" */ 'lodash');
++
++   element.innerHTML = _.join(['Hello', 'webpack'], ' ');
++
++   return element;
+  }
+
+  getComponent().then(component => {
+    document.body.appendChild(component);
+  });
+```
+
+### require.ensure？？？
+
+## 预取/预加载模块(prefetch/preload module)？？？
 
 ## bundle 分析(bundle analysis) 
 如果我们以分离代码作为开始，那么就应该以检查模块的输出结果作为结束，对其进行分析是很有用处的。[官方提供分析工具](https://github.com/webpack/analyse) 是一个好的初始选择。下面是一些可选择的社区支持(community-supported)工具：
@@ -1161,8 +1283,96 @@ promise-loader：类似于 bundle-loader ，但是使用了 promise API。
 * webpack-bundle-analyzer：一个 plugin 和 CLI 工具，它将 bundle 内容展示为便捷的、交互式、可缩放的树状图形式。
 * webpack bundle optimize helper：此工具会分析你的 bundle，并为你提供可操作的改进措施建议，以减少 bundle 体积大小。
 
+### 官方提供分析工具？？？
+
+### webpack-chart？？？
+
+### webpack-visualizer？？？
+
+### webpack-bundle-analyzer？？？
+
+### webpack bundle optimize helper？？？
+
+
+
 # 懒加载
 
+懒加载或者按需加载，是一种很好的优化网页或应用的方式。这种方式实际上是先把你的代码在一些逻辑断点处分离开，然后在一些代码块中完成某些操作后，立即引用或即将引用另外一些新的代码块。这样加快了应用的初始加载速度，减轻了它的总体体积，因为某些代码块可能永远不会被加载。
+
+## 示例 
+
+我们在[代码分离](https://webpack.docschina.org/guides/code-splitting#dynamic-imports)中的例子基础上，进一步做些调整来说明这个概念。那里的代码确实会在脚本运行的时候产生一个分离的代码块 `lodash.bundle.js` ，在技术概念上“懒加载”它。问题是加载这个包并不需要用户的交互 -- 意思是每次加载页面的时候都会请求它。这样做并没有对我们有很多帮助，还会对性能产生负面影响。
+
+我们试试不同的做法。我们增加一个交互，当用户点击按钮的时候用 console 打印一些文字。但是会等到第一次交互的时候再加载那个代码块（`print.js`）。为此，我们返回到代码分离的例子中，把 `lodash` 放到主代码块中，重新运行*代码分离*中的代码 [final *Dynamic Imports* example](https://webpack.docschina.org/guides/code-splitting#dynamic-imports)。
+
+**project**
+
+```diff
+webpack-demo
+|- package.json
+|- webpack.config.js
+|- /dist
+|- /src
+  |- index.js
++ |- print.js
+|- /node_modules
+```
+
+**src/print.js**
+
+```js
+console.log('The print.js module has loaded! See the network tab in dev tools...');
+
+export default () => {
+  console.log('Button Clicked: Here\'s "some text"!');
+};
+```
+
+**src/index.js**
+
+```diff
++ import _ from 'lodash';
++
+- async function getComponent() {
++ function component() {
+    var element = document.createElement('div');
+-   const _ = await import(/* webpackChunkName: "lodash" */ 'lodash');
++   var button = document.createElement('button');
++   var br = document.createElement('br');
+
++   button.innerHTML = 'Click me and look at the console!';
+    element.innerHTML = _.join(['Hello', 'webpack'], ' ');
++   element.appendChild(br);
++   element.appendChild(button);
++
++   // Note that because a network request is involved, some indication
++   // of loading would need to be shown in a production-level site/app.
++   button.onclick = e => import(/* webpackChunkName: "print" */ './print').then(module => {
++     var print = module.default;
++
++     print();
++   });
+
+    return element;
+  }
+
+- getComponent().then(component => {
+-   document.body.appendChild(component);
+- });
++ document.body.appendChild(component());
+```
+
+> 注意当调用 ES6 模块的 `import()` 方法（引入模块）时，必须指向模块的 `.default` 值，因为它才是 promise 被处理后返回的实际的 `module` 对象。
+
+## 框架 
+
+许多框架和类库对于如何用它们自己的方式来实现（懒加载）都有自己的建议。这里有一些例子：
+
+- React: [Code Splitting and Lazy Loading](https://reacttraining.com/react-router/web/guides/code-splitting)
+- Vue: [Lazy Load in Vue using Webpack's code splitting](https://alexjoverm.github.io/2017/07/16/Lazy-load-in-Vue-using-Webpack-s-code-splitting/)
+- AngularJS: [AngularJS + Webpack = lazyLoad](https://medium.com/@var_bin/angularjs-webpack-lazyload-bb7977f390dd) by [@var_bincom](https://twitter.com/var_bincom)
+
+### Code Splitting and Lazy Loading？？？
 
 # 入口(entry)
 
@@ -1178,10 +1388,3 @@ module.exports = {
   entry: './path/to/my/entry/file.js'
 };
 
-# CSS提取
-# LESS
-# SASS
-# POSTCSS
-# html-loader
-# image-webpack-loader
-# url-loader
