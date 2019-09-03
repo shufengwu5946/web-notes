@@ -1479,6 +1479,335 @@ module.exports = {
 
 
 
+# shim 预置依赖
+
+在JavaScript的世界里,有两个词经常被提到,shim和polyfill.它们指的都是什么,又有什么区别?
+一个shim是一个库,它将一个新的API引入到一个旧的环境中,而且仅靠旧环境中已有的手段实现
+一个polyfill就是一个用在浏览器API上的shim.我们通常的做法是先检查当前浏览器是否支持某个API,如果不支持的话就加载对应的polyfill.然后新旧浏览器就都可以使用这个API了.术语polyfill来自于一个家装产品Polyfilla:
+
+https://www.zhihu.com/question/22129715
+
+Polyfilla是一个英国产品,在美国称之为Spackling Paste(译者注:刮墙的,在中国称为腻子).记住这一点就行:把旧的浏览器想象成为一面有了裂缝的墙.这些[polyfills]会帮助我们把这面墙的裂缝抹平,还我们一个更好的光滑的墙壁(浏览器)
+Paul Irish发布过一个Polyfills的总结页面“HTML5 Cross Browser Polyfills”.es5-shim是一个shim(而不是polyfill)的例子,它在ECMAScript 3的引擎上实现了ECMAScript 5的新特性,而且在[Node.js](https://link.zhihu.com/?target=https%3A//www.baidu.com/s%3Fwd%3DNode.js%26tn%3D44039180_cpr%26fenlei%3Dmv6quAkxTZn0IZRqIHckPjm4nH00T1YLPhcvmWckm1TznAmdP1ub0ZwV5Hcvrjm3rH6sPfKWUMw85HfYnjn4nH6sgvPsT6KdThsqpZwYTjCEQLGCpyw9Uz4Bmy-bIi4WUvYETgN-TLwGUv3EnHTvP1fsrjb4P1TLnjTvnWR3n0)上和在浏览器上有完全相同的表现(译者注:因为它能在[Node.js](https://link.zhihu.com/?target=https%3A//www.baidu.com/s%3Fwd%3DNode.js%26tn%3D44039180_cpr%26fenlei%3Dmv6quAkxTZn0IZRqIHckPjm4nH00T1YLPhcvmWckm1TznAmdP1ub0ZwV5Hcvrjm3rH6sPfKWUMw85HfYnjn4nH6sgvPsT6KdThsqpZwYTjCEQLGCpyw9Uz4Bmy-bIi4WUvYETgN-TLwGUv3EnHTvP1fsrjb4P1TLnjTvnWR3n0)上使用,不光浏览器上,所以它不是polyfill).
+作者：Musclemen链接：https://www.zhihu.com/question/22129715/answer/347924641来源：知乎著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。
+
+## shim 预置全局变量
+
+还记得我们之前用过的 `lodash` 吗？出于演示目的，例如把这个应用程序中的模块依赖，改为一个全局变量依赖。要实现这些，我们需要使用 `ProvidePlugin` 插件。
+
+使用 [`ProvidePlugin`](https://webpack.docschina.org/plugins/provide-plugin) 后，能够在 webpack 编译的每个模块中，通过访问一个变量来获取一个 package。如果 webpack 看到模块中用到这个变量，它将在最终 bundle 中引入给定的 package。让我们先移除 `lodash` 的 `import` 语句，改为通过插件提供它：
+
+**src/index.js**
+
+```diff
+- import _ from 'lodash';
+```
+
+**webpack.config.js**
+
+```diff
+  const path = require('path');
++ const webpack = require('webpack');
+
+  module.exports = {
+    entry: './src/index.js',
+    output: {
+      filename: 'bundle.js',
+      path: path.resolve(__dirname, 'dist')
+-   }
++   },
++   plugins: [
++     new webpack.ProvidePlugin({
++       _: 'lodash'
++     })
++   ]
+  };
+```
+
+我们本质上所做的，就是告诉 webpack……
+
+> 如果你遇到了至少一处用到 `_` 变量的模块实例，那请你将 `lodash` package 引入进来，并将其提供给需要用到它的模块。
+
+
+
+还可以使用 `ProvidePlugin` 暴露出某个模块中单个导出，通过配置一个“数组路径”（例如 `[module, child, ...children?]`）实现此功能。所以，我们假想如下，无论 `join` 方法在何处调用，我们都只会获取到 `lodash`中提供的 `join` 方法。
+
+**src/index.js**
+
+```diff
+  function component() {
+    var element = document.createElement('div');
+
+-   element.innerHTML = _.join(['Hello', 'webpack'], ' ');
++   element.innerHTML = join(['Hello', 'webpack'], ' ');
+
+    return element;
+  }
+
+  document.body.appendChild(component());
+```
+
+**webpack.config.js**
+
+```diff
+  const path = require('path');
+  const webpack = require('webpack');
+
+  module.exports = {
+    ...
+    
+    plugins: [
+      new webpack.ProvidePlugin({
+-       _: 'lodash'
++       join: ['lodash', 'join']
+      })
+    ]
+  };
+```
+
+这样就能很好的与 [tree shaking](https://webpack.docschina.org/guides/tree-shaking) 配合，将 `lodash` library 中的其余没有用到的导出去除。
+
+## 细粒度 shim 
+
+一些遗留模块依赖的 `this` 指向的是 `window` 对象。在接下来的用例中，调整我们的 `index.js`：
+
+```diff
+  function component() {
+    var element = document.createElement('div');
+
+    element.innerHTML = join(['Hello', 'webpack'], ' ');
++
++   // 假设我们处于 `window` 上下文
++   this.alert('Hmmm, this probably isn\'t a great idea...')
+
+    return element;
+  }
+
+  document.body.appendChild(component());
+```
+
+当模块运行在 CommonJS 上下文中，这将会变成一个问题，也就是说此时的 `this` 指向的是 `module.exports`。在这种情况下，你可以通过使用 [`imports-loader`](https://webpack.docschina.org/loaders/imports-loader/) 覆盖 `this` 指向：
+
+**webpack.config.js**
+
+```diff
+  const path = require('path');
+  const webpack = require('webpack');
+
+  module.exports = {
+    ...
+    
++   module: {
++     rules: [
++       {
++         test: require.resolve('index.js'),
++         use: 'imports-loader?this=>window'
++       }
++     ]
++   },
+    ...
+    
+  };
+```
+
+## 全局 export 
+
+让我们假设，某个 library 创建出一个全局变量，它期望 consumer(使用者) 使用这个变量。为此，我们可以在项目配置中，添加一个小模块来演示说明：
+
+**project**
+
+```diff
+  webpack-demo
+  |- package.json
+  |- webpack.config.js
+  |- /dist
+  |- /src
+    |- index.js
++   |- globals.js
+  |- /node_modules
+```
+
+**src/globals.js**
+
+```js
+var file = 'blah.txt';
+var helpers = {
+  test: function() { console.log('test something'); },
+  parse: function() { console.log('parse something'); }
+};
+```
+
+你可能从来没有在自己的源码中做过这些事情，但是你也许遇到过一个老旧的 library，和上面所展示的代码类似。在这种情况下，我们可以使用 [`exports-loader`](https://webpack.docschina.org/loaders/exports-loader/)，将一个全局变量作为一个普通的模块来导出。例如，为了将 `file` 导出为 `file` 以及将 `helpers.parse` 导出为 `parse`，做如下调整：
+
+**webpack.config.js**
+
+```diff
+  const path = require('path');
+  const webpack = require('webpack');
+
+  module.exports = {
+    ...
+    
+    module: {
+      rules: [
+        ...
+        
++       {
++         test: require.resolve('globals.js'),
++         use: 'exports-loader?file,parse=helpers.parse'
++       }
+      ]
+    },
+    ...
+    
+  };
+```
+
+现在，在我们的 entry 入口文件中（即 `src/index.js`），我们能 `import { file, parse } from './globals.js';` ，然后一切将顺利运行。
+
+## 加载 polyfill 
+
+有很多方法来加载 polyfill。例如，想要引入 [`babel-polyfill`](https://babel.docschina.org/docs/en/babel-polyfill/) 我们只需如下操作：
+
+```bash
+npm install --save babel-polyfill
+```
+
+然后，使用 `import` 将其引入到我们的主 bundle 文件：
+
+> 注意，我们没有将 `import` 绑定到某个变量。这是因为 polyfill 直接基于自身执行，并且是在基础代码执行之前，这样通过这些预置，我们就可以假定已经具有某些原生功能。
+
+注意，这种方式优先考虑正确性，而不考虑 bundle 体积大小。为了安全和可靠，polyfill/shim 必须**运行于所有其他代码之前**，而且需要同步加载，或者说，需要在所有 polyfill/shim 加载之后，再去加载所有应用程序代码。 社区中存在许多误解，即现代浏览器“不需要”polyfill，或者 polyfill/shim 仅用于添加缺失功能 - 实际上，它们通常用于*修复损坏实现(repair broken implementation)*，即使是在最现代的浏览器中，也会出现这种情况。 因此，最佳实践仍然是，不加选择地和同步地加载所有 polyfill/shim，尽管这会导致额外的 bundle 体积成本。
+
+如果你认为自己已经打消这些顾虑，并且希望承受损坏的风险。那么接下来的这件事情，可能是你应该要做的： 我们将会把 `import` 放入一个新文件，并加入 [`whatwg-fetch`](https://github.com/github/fetch) polyfill：
+
+```bash
+npm install --save whatwg-fetch
+```
+
+**src/index.js**
+
+```diff
+- import 'babel-polyfill';
+```
+
+**project**
+
+```diff
+  webpack-demo
+  |- package.json
+  |- webpack.config.js
+  |- /dist
+  |- /src
+    |- index.js
+    |- globals.js
++   |- polyfills.js
+  |- /node_modules
+```
+
+**src/polyfills.js**
+
+```javascript
+import 'babel-polyfill';
+import 'whatwg-fetch';
+```
+
+**webpack.config.js**
+
+```diff
+  const path = require('path');
+  const webpack = require('webpack');
+
+  module.exports = {
+-   entry: './src/index.js',
++   entry: {
++     polyfills: './src/polyfills.js',
++     index: './src/index.js'
++   },
+    output: {
+-     filename: 'bundle.js',
++     filename: '[name].bundle.js',
+      path: path.resolve(__dirname, 'dist')
+    },
+    ...
+    
+  };
+```
+
+如上配置之后，我们可以在代码中添加一些逻辑，条件地加载新的 `polyfills.bundle.js` 文件。根据需要支持的技术和浏览器来决定是否加载。我们将做一些简单的试验，来确定是否需要引入这些 polyfill：
+
+**dist/index.html**
+
+```diff
+  <!doctype html>
+  <html>
+    <head>
+      <title>Getting Started</title>
++     <script>
++       var modernBrowser = (
++         'fetch' in window &&
++         'assign' in Object
++       );
++
++       if ( !modernBrowser ) {
++         var scriptElement = document.createElement('script');
++
++         scriptElement.async = false;
++         scriptElement.src = '/polyfills.bundle.js';
++         document.head.appendChild(scriptElement);
++       }
++     </script>
+    </head>
+    <body>
+      <script src="index.bundle.js"></script>
+    </body>
+  </html>
+```
+
+现在，在 entry 入口文件中，可以通过 `fetch` 获取一些数据：
+
+**src/index.js**
+
+```diff
+  function component() {
+    var element = document.createElement('div');
+
+    element.innerHTML = join(['Hello', 'webpack'], ' ');
+
+    return element;
+  }
+
+  document.body.appendChild(component());
++
++ fetch('https://jsonplaceholder.typicode.com/users')
++   .then(response => response.json())
++   .then(json => {
++     console.log('We retrieved some data! AND we\'re confident it will work on a variety of browser distributions.')
++     console.log(json)
++   })
++   .catch(error => console.error('Something went wrong when fetching this data: ', error))
+```
+
+执行构建脚本，可以看到，浏览器发送了额外的 `polyfills.bundle.js` 文件请求，然后所有代码顺利执行。注意，以上的这些设定可能还会有所改进，这里我们向你提供一个很棒的想法：将 polyfill 提供给需要引入它的用户。
+
+## 进一步优化
+
+### babel-preset-env？？？
+
+## Node 内置 ？？？
+
+像 `process` 这种 Node 内置模块，能直接根据配置文件进行正确的 polyfill，而不需要任何特定的 loader 或者 plugin。
+
+## 其他工具 
+
+### script-loader？？？
+
+> 
+
+最后，一些模块支持多种 [模块格式](https://webpack.docschina.org/concepts/modules)，例如一个混合有 AMD、CommonJS 和 legacy(遗留) 的模块。在大多数这样的模块中，会首先检查 `define`，然后使用一些怪异代码导出一些属性。在这些情况下，可以通过 [`imports-loader`](https://webpack.docschina.org/loaders/imports-loader/) 设置 `define=>false` 来强制 CommonJS 路径。
+
+
+
 # 入口(entry)
 
 * 指示 webpack 应该使用哪个模块，来作为构建其内部依赖图的开始。
