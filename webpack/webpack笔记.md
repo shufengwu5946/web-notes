@@ -1848,9 +1848,159 @@ module.exports = env => {
 
 
 
-#  构建性能
+#  构建性能？？？
 
 
+
+# Loader
+
+常用loader：
+
+## 文件
+
+### raw-loader
+
+加载文件原始内容（utf-8）
+
+```bash
+npm install --save-dev raw-loader
+```
+
+#### 用法
+
+通过 webpack 配置、命令行或者内联使用 loader。
+
+webpack.config.js
+
+```js
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.txt$/,
+        use: 'raw-loader'
+      }
+    ]
+  }
+}
+```
+
+通过命令行（CLI）
+
+```bash
+webpack --module-bind 'txt=raw-loader'
+```
+
+内联使用
+
+在你的项目中
+
+```js
+import txt from 'raw-loader!./file.txt';
+```
+
+### val-loader？？？
+
+### url-loader
+
+将文件加载为`base64`编码的URL
+
+`url-loader` 功能类似于 [`file-loader`](https://github.com/webpack-contrib/file-loader)，但是在文件大小（单位 byte）低于指定的限制时，可以返回一个 DataURL。
+
+```console
+$ npm install url-loader --save-dev
+```
+
+```js
+import img from './image.png'
+// webpack.config.js
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.(png|jpg|gif)$/i,
+        use: [
+          {
+            loader: 'url-loader',
+            options: {
+                //字节
+              limit: 8192
+            }
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+#### Options 
+
+##### `1、fallback` 
+
+Type: `String` Default: `'file-loader'`
+
+指定当target文件size大于limit的时候使用的loader
+
+```js
+// webpack.config.js
+{
+  loader: 'url-loader',
+  options: {
+    fallback: 'responsive-loader'
+  }
+}
+```
+
+##### `2、limit` 
+
+Type: `Number` Default: `undefined`
+
+单位字节，target文件小于limit，返回base64；如果大于limit，默认使用file-loader或fallback指定的loader。
+
+默认limit为无穷大，都转为base64.
+
+```js
+// webpack.config.js
+{
+  loader: 'url-loader',
+  options: {
+    limit: 8192
+  }
+}
+```
+
+##### `3、mimetype` 
+
+Type: `String` Default: `(file extension)`
+
+MIME类型
+
+```js
+// webpack.config.js
+{
+  loader: 'url-loader',
+  options: {
+    mimetype: 'image/png'
+  }
+}
+```
+
+### file-loader
+
+解析import`/`require()文件为url，并且将文件发送到输出目录。
+
+## JSON
+
+## 转译
+
+## 模板
+
+## 样式
+
+## 代码检查和测试
+
+## 框架
 
 
 
