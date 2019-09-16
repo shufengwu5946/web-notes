@@ -1990,6 +1990,315 @@ MIME类型
 
 解析import`/`require()文件为url，并且将文件发送到输出目录。
 
+**ile.js**
+
+```js
+import img from './file.png';
+```
+
+然后，在 `webpack` 配置中添加 loader。例如：
+
+**webpack.config.js**
+
+```js
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.(png|jpg|gif)$/,
+        use: [
+          {
+            loader: 'file-loader',
+            options: {},
+          },
+        ],
+      },
+    ],
+  },
+}
+```
+
+> 默认情况下，生成文件的文件名，是文件内容的 MD5 哈希值，并会保留所引用资源的原始扩展名。
+
+#### options
+
+##### 1、name
+
+类型：`String|Function` 默认：`'[hash].[ext]'`
+
+使用查询参数的名称，为目标文件设定文件名模板。例如在保留完整目录结构的情况下，将context目录文件发送到output目录：
+
+`String` 
+
+**webpack.config.js**
+
+```js
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.(png|jpg|gif)$/,
+        use: [
+          {
+            loader: 'file-loader',
+            options: {
+              name: '[path][name].[ext]',
+            },
+          },
+        ],
+      },
+    ],
+  },
+};
+```
+
+`Function` 
+
+**webpack.config.js**
+
+```js
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.(png|jpg|gif)$/,
+        use: [
+          {
+            loader: 'file-loader',
+            options: {
+              name(file) {
+                if (process.env.NODE_ENV === 'development') {
+                  return '[path][name].[ext]';
+                }
+
+                return '[hash].[ext]';
+              },
+            },
+          },
+        ],
+      },
+    ],
+  },
+};
+```
+
+> 默认情况下，文件会按照你指定的路径和名称输出同一目录中，且会使用相同的 URI 路径来访问文件
+
+##### 2、`outputPath` 
+
+类型：`String|Function` 默认：undefined
+
+指定目标文件放置路径。
+
+`String` 
+
+**webpack.config.js**
+
+```js
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.(png|jpg|gif)$/,
+        use: [
+          {
+            loader: 'file-loader',
+            options: {
+              outputPath: 'images',
+            },
+          },
+        ],
+      },
+    ],
+  },
+};
+```
+
+`Function` 
+
+**webpack.config.js**
+
+```js
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.(png|jpg|gif)$/,
+        use: [
+          {
+            loader: 'file-loader',
+            options: {
+              outputPath: (url, resourcePath, context) => {
+                // `resourcePath` is original absolute path to asset
+                // `context` is directory where stored asset (`rootContext`) or `context` option
+
+                // To get relative path you can use
+                // const relativePath = path.relative(context, resourcePath);
+
+                if (/my-custom-image\.png/.test(resourcePath)) {
+                  return `other_output_path/${url}`;
+                }
+
+                if (/images/.test(context)) {
+                  return `image_output_path/${url}`;
+                }
+
+                return `output_path/${url}`;
+              },
+            },
+          },
+        ],
+      },
+    ],
+  },
+};
+```
+
+##### 3、`publicPath` 
+
+类型：`String|Function` 默认：`__webpack_public_path__`
+
+给目标文件指定公共路径
+
+`String` 
+
+**webpack.config.js**
+
+```js
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.(png|jpg|gif)$/,
+        use: [
+          {
+            loader: 'file-loader',
+            options: {
+              publicPath: 'assets',
+            },
+          },
+        ],
+      },
+    ],
+  },
+};
+```
+
+`Function` 
+
+**webpack.config.js**
+
+```js
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.(png|jpg|gif)$/,
+        use: [
+          {
+            loader: 'file-loader',
+            options: {
+              publicPath: (url, resourcePath, context) => {
+                // `resourcePath` is original absolute path to asset
+                // `context` is directory where stored asset (`rootContext`) or `context` option
+
+                // To get relative path you can use
+                // const relativePath = path.relative(context, resourcePath);
+
+                if (/my-custom-image\.png/.test(resourcePath)) {
+                  return `other_public_path/${url}`;
+                }
+
+                if (/images/.test(context)) {
+                  return `image_output_path/${url}`;
+                }
+
+                return `public_path/${url}`;
+              },
+            },
+          },
+        ],
+      },
+    ],
+  },
+};
+```
+
+##### 4、`context` 
+
+类型：`String` 默认：[`context`](https://webpack.js.org/configuration/entry-context/#context)
+
+Specifies a custom file context.
+
+```js
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.(png|jpg|gif)$/,
+        use: [
+          {
+            loader: 'file-loader',
+            options: {
+              context: 'project',
+            },
+          },
+        ],
+      },
+    ],
+  },
+};
+```
+
+##### 5、`emitFile` 
+
+类型：`Boolean` 默认：`true`
+
+如果是 true，生成一个文件（向文件系统写入一个文件）。 如果是 false，loader 会返回 public URI，但**不会**生成文件。 对于服务器端 package，禁用此选项通常很有用。
+
+##### 6、`regExp` 
+
+类型：`RegExp` 默认：`undefined`
+
+Specifies a Regular Expression to one or many parts of the target file path. The capture groups can be reused in the `name` property using `[N]` [placeholder](https://github.com/webpack-contrib/file-loader#placeholders).
+
+指定目标文件路径的正则表达式。匹配的路径能够用在name属性的 [N]占位符。
+
+**file.js**
+
+```js
+import img from './customer01/file.png';
+```
+
+**webpack.config.js**
+
+```js
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.(png|jpg|gif)$/,
+        use: [
+          {
+            loader: 'file-loader',
+            options: {
+              regExp: /\/([a-z0-9]+)\/[a-z0-9]+\.png$/,
+              name: '[1]-[name].[ext]',
+            },
+          },
+        ],
+      },
+    ],
+  },
+};
+```
+
+>  如果使用[0]，它将被整个测试字符串替换，而[1]将包含正则表达式的第一个匹配，依此类推…？？？
+
+> 实测[0]是第一个匹配，[1]是第二个匹配
+
+### ref-loader？？？
+
 ## JSON
 
 ## 转译
@@ -2004,7 +2313,49 @@ MIME类型
 
 
 
+# Env
 
+* 当我们设置 mode 为 development 或者 production时，webpack
+  会自动的进行一些设置（当然设置了模式以后，webpack会自动的为项目添加一些插件）
+
+  js业务代码中调用process.env.NODE_ENV默认取决于mode的值：
+
+  > mode: development --> process.env.NODE_ENV = development
+  > mode: production --> process.env.NODE_ENV = production
+  > 默认情况下 --> process.env.NODE_ENV = production
+
+* js业务代码中process.env.NODE_ENV的值也可以通过DefinePlugin插件进行设置：
+
+```javascript
+const webpack = require("webpack");
+
+module.exports = {
+  
+  plugins: [
+    new webpack.DefinePlugin({
+      "process.env": {
+        NODE_ENV: '"production"'
+      }
+    })
+  ],
+  
+};
+
+```
+
+DefinePlugin插件中process.env.NODE_ENV的值会覆盖mode的值。
+
+* webpack.config.js中的process.env.NODE_ENV需要通过package.json中的脚本传入：
+
+```json
+"build": "cross-env NODE_ENV=development webpack",
+```
+
+需要提前安装cross-env
+
+```bash
+yarn add --dev cross-env
+```
 
 
 
