@@ -2299,13 +2299,519 @@ module.exports = {
 
 ### ref-loader？？？
 
+
+
 ## JSON
+
+### json-loader
+
+>  **注意：由于 webpack >= v2.0.0 默认支持导入 JSON 文件。如果你使用自定义文件扩展名，你可能仍然需要使用此 loader。**
+
+```js
+const json = require('json-loader!./file.json');
+```
+
+`通过配置`（推荐） 
+
+```js
+const json = require('./file.json');
+```
+
+**webpack.config.js**
+
+```js
+module.exports = {
+  module: {
+    loaders: [
+      {
+        test: /\.json$/,
+        loader: 'json-loader'
+      }
+    ]
+  }
+}
+```
+
+### json5-loader
+
+解析json5文件为对象
+
+```sh
+$ npm install json5-loader --save-dev
+```
+
+你可以通过以下两种用法使用此 loader：
+
+- 在 webpack 配置里的 `module.loaders` 对象中配置 `json5-loader`；
+- 或者，直接在 require 语句中使用 `json5-loader!` 前缀。
+
+假设我们有如下 `json5` 文件：
+
+**file.json5**
+
+```json5
+// file.json5
+{
+  env: 'production',
+  passwordStrength: 'strong',
+}
+```
+
+**webpack.config.js**
+
+```js
+// webpack.config.js
+module.exports = {
+  entry: './index.js',
+  output: {
+    /* ... */
+  },
+  module: {
+    loaders: [
+      {
+        // 使所有以 .json5 结尾的文件使用 `json5-loader`
+        test: /\.json5$/,
+        loader: 'json5-loader',
+      },
+    ],
+  },
+};
+// index.js
+var appConfig = require('./appData.json5');
+// 或者 ES6 语法
+// import appConfig from './appData.json5'
+
+console.log(appConfig.env); // 'production'
+```
+
+require 语句使用 loader 前缀的用法 
+
+```js
+var appConfig = require('json5-loader!./appData.json5');
+// 返回的是 json 解析过的对象
+
+console.log(appConfig.env); // 'production'
+```
+
+如果需要在 Node.js 中使用，不要忘记兼容(polyfill) require。
+
+### cson-loader
+
+使用同上
+
+## 维护人员 
 
 ## 转译
 
 ## 模板
 
 ## 样式
+
+### style-loader
+
+通过<style>标签将CSS添加到DOM中。
+
+建议将 `style-loader` 与 [`css-loader`](https://github.com/webpack/css-loader) 结合使用
+
+**component.js**
+
+```js
+import style from './file.css';
+```
+
+**webpack.config.js**
+
+```js
+{
+  module: {
+    rules: [
+      {
+        test: /\.css$/,
+        use: [{ loader: 'style-loader' }, { loader: 'css-loader' }],
+      },
+    ];
+  }
+}
+```
+
+#### `Url` 
+
+也可以添加一个URL `<link href="path/to/file.css" rel="stylesheet">`，而不是用带有 `<style></style>` 标签的内联 CSS `{String}`。
+
+```js
+import url from 'file.css';
+```
+
+**webpack.config.js**
+
+```js
+{
+  module: {
+    rules: [
+      {
+        test: /\.css$/,
+        use: [{ loader: 'style-loader/url' }, { loader: 'file-loader' }],
+      },
+    ];
+  }
+}
+<link rel="stylesheet" href="path/to/file.css" />
+```
+
+> ℹ️ 使用 `url` 引用的 Source map 和资源：当 style-loader 与 `{ options: { sourceMap: true } }` 选项一起使用时，CSS 模块将生成为 `Blob`，因此相对路径无法正常工作（他们将相对于 `chrome:blob` 或 `chrome:devtools`）。为了使资源保持正确的路径，必须设置 webpack 配置中的 `output.publicPath` 属性，以便生成绝对路径。或者，你可以启用上面提到的 `convertToAbsoluteUrls` 选项。
+
+
+
+#### `Useable`
+
+通过 `style.use()` / `style.unuse()`按需注入样式。
+
+按照惯例，`引用计数器 API(Reference Counter API)` 应关联到 `.useable.css`，而 `.css` 的载入，应该使用基本的 `style-loader` 用法。
+
+**webpack.config.js**
+
+```js
+{
+  module: {
+    rules: [
+      {
+        test: /\.css$/,
+        exclude: /\.useable\.css$/,
+        use: [
+          { loader: "style-loader" },
+          { loader: "css-loader" },
+        ],
+      },
+      {
+        test: /\.useable\.css$/,
+        use: [
+          {
+            loader: "style-loader/useable"
+          },
+          { loader: "css-loader" },
+        ],
+      },
+    ],
+  },
+}
+```
+
+`引用计数器 API(reference counter API)` 
+
+**component.js**
+
+```js
+import style from './file.useable.css';
+
+style.use(); // = style.ref();
+style.unuse(); // = style.unref();
+```
+
+样式不会添加在 `import/require()` 上，而是在调用 `use`/`ref` 时添加。如果 `unuse`/`unref` 与 `use`/`ref` 一样频繁地被调用，那么样式将从页面中删除。
+
+> ⚠️ 当 `unuse`/`unref` 比 `use`/`ref` 调用频繁的时候，产生的行为是不确定的。所以不要这样做。
+
+##### 1、hmr
+
+##### 2、base
+
+##### 3、attrs
+
+如果已定义，style-loader 将把属性值附加在 `<style>` / `<link>` 元素上。
+
+**component.js**
+
+```js
+import style from './file.css';
+```
+
+**webpack.config.js**
+
+```js
+{
+  test: /\.css$/,
+  use: [
+    { loader: 'style-loader', options: { attrs: { id: 'id' } } }
+    { loader: 'css-loader' }
+  ]
+}
+<style id="id"></style>
+```
+
+##### 4、Url
+
+见上文
+
+##### 5、transform
+
+`transform` 是一个函数，可以在通过 style-loader 加载到页面之前修改 css。 该函数将在即将加载的 css 上调用，函数的返回值将被加载到页面，而不是原始的 css 中。 如果 `transform` 函数的返回值是 falsy 值，那么 css 根本就不会加载到页面中。
+
+> ⚠️ 如果在“tranform.js”中使用ES模块语法，则需要对其进行转换，否则它将抛出{error}。
+
+**webpack.config.js**
+
+```js
+{
+  loader: 'style-loader',
+  options: {
+    transform: 'path/to/transform.js'
+  }
+}
+```
+
+**transform.js**
+
+```js
+module.exports = function(css) {
+  // Here we can change the original css
+  const transformed = css.replace('.classNameA', '.classNameB');
+
+  return transformed;
+};
+```
+
+`Conditional` 
+
+**webpack.config.js**
+
+```js
+{
+  loader: 'style-loader',
+  options: {
+    transform: 'path/to/conditional.js'
+  }
+}
+```
+
+**conditional.js**
+
+```js
+module.exports = function(css) {
+  // 如果条件匹配则加载[和转换] CSS
+  if (css.includes('something I want to check')) {
+    return css;
+  }
+  // 如果返回 falsy 值，则不会加载 CSS
+  return false;
+};
+```
+
+##### 6、insertAt
+
+默认情况下，style-loader 将 `<style>` 元素附加到样式目标(style target)的末尾，即页面的 `<head>` 标签，也可以是由 `insertInto` 指定其他标签。这将导致 loader 创建的 CSS 优先于目标中已经存在的 CSS。要在目标的起始处插入 style 元素，请将此查询参数(query parameter)设置为 'top'，例如
+
+**webpack.config.js**
+
+```js
+{
+  loader: 'style-loader',
+  options: {
+    insertAt: 'top'
+  }
+}
+```
+
+A new `<style>` element can be inserted before a specific element by passing an object, e.g.
+
+**webpack.config.js**
+
+```js
+{
+  loader: 'style-loader',
+  options: {
+    insertAt: {
+        before: '#id'
+    }
+  }
+}
+```
+
+##### 7、insertInto
+
+默认情况下，样式加载器将 `<style>` 元素插入到页面的 `<head>` 标签中。如果要将标签插入到其他位置，可以在这里为该元素指定 CSS 选择器。如果你想要插入到 [IFrame](https://developer.mozilla.org/en-US/docs/Web/API/HTMLIFrameElement) 中，请确保你具有足够的访问权限，样式将被注入到内容文档的 head 中。
+
+You can also pass function to override default behavior and insert styles in your container, e.g
+
+**webpack.config.js**
+
+```js
+{
+  loader: 'style-loader',
+  options: {
+    insertInto: () => document.querySelector("#root"),
+  }
+}
+```
+
+通过使用函数，可以将样式插入到 [ShadowRoot](https://developer.mozilla.org/en-US/docs/Web/API/ShadowRoot) 中，例如
+
+**webpack.config.js**
+
+```js
+{
+  loader: 'style-loader',
+  options: {
+    insertInto: () => document.querySelector("#root").shadowRoot,
+  }
+}
+```
+
+##### 8、singleton
+
+如果已定义，则 style-loader 将重用单个 `<style></style>` 元素，而不是为每个所需的模块添加/删除单个元素。
+
+> ℹ️ 默认情况下启用此选项，IE9 对页面上允许的 style 标签数量有严格的限制。你可以使用 singleton 选项来启用或禁用它。
+
+**webpack.config.js**
+
+```js
+{
+  loader: 'style-loader',
+  options: {
+    singleton: true
+  }
+}
+```
+
+##### 9、sourceMap
+
+启用/禁用 source map 加载
+
+**webpack.config.js**
+
+```js
+{
+  loader: 'style-loader',
+  options: {
+    sourceMap: true
+  }
+}
+```
+
+##### 10、convertToAbsoluteUrls
+
+如果 convertToAbsoluteUrls 和 sourceMaps 都启用，那么相对 url 将在 css 注入页面之前，被转换为绝对 url。这解决了在启用 source map 时，相对资源无法加载的[问题](https://github.com/webpack/style-loader/pull/96)。你可以使用 convertToAbsoluteUrls 选项启用它。
+
+**webpack.config.js**
+
+```js
+{
+  loader: 'style-loader',
+  options: {
+    sourceMap: true,
+    convertToAbsoluteUrls: true
+  }
+}
+```
+
+### css-loader
+
+解析 CSS 文件后，使用 import 加载，并且返回 CSS 代码
+
+To begin, you'll need to install `css-loader`:
+
+```console
+npm install --save-dev css-loader
+```
+
+Then add the plugin to your `webpack` config. For example:
+
+**file.js**
+
+```js
+import css from 'file.css';
+```
+
+**webpack.config.js**
+
+```js
+module.exports = {
+  module: {
+    rules: [
+      {
+        test: /\.css$/,
+        use: ['style-loader', 'css-loader'],
+      },
+    ],
+  },
+};
+```
+
+**url**
+
+启用/禁用 `url()` 处理
+
+**import**
+
+启用/禁用 @import 处理
+
+**modules**
+
+启用/禁用 CSS 模块和设置模式
+
+CSS modules 参考阮一峰博客 http://www.ruanyifeng.com/blog/2016/06/css_modules.html
+
+**localIdentName**
+
+配置生成资源的标识符名称
+
+
+
+### less-loader
+
+加载和转译 LESS 文件
+
+## 要求 
+
+此模块需要 Node v6.9.0+ 和 webpack v4.0.0+。
+
+## 起步 
+
+```console
+$ npm install less-loader --save-dev
+```
+
+然后，修改 `webpack.config.js`：
+
+```js
+// webpack.config.js
+module.exports = {
+  ...
+  module: {
+    rules: [{
+      test: /\.less$/,
+      loader: 'less-loader' // 将 Less 编译为 CSS
+    }]
+  }
+};
+```
+
+The `less-loader` requires [less](https://github.com/less/less.js) as [`peerDependency`](https://docs.npmjs.com/files/package.json#peerdependencies). Thus you are able to control the versions accurately.
+
+将 [`css-loader`](https://webpack.docschina.org/loaders/css-loader/)、 [`style-loader`](https://webpack.docschina.org/loaders/style-loader/) 和 `less-loader` 链式调用， 可以把所有样式立即应用于 DOM。
+
+```js
+// webpack.config.js
+module.exports = {
+  ...
+  module: {
+    rules: [{
+      test: /\.less$/,
+      use: [{
+        loader: 'style-loader' // creates style nodes from JS strings
+      }, {
+        loader: 'css-loader' // translates CSS into CommonJS
+      }, {
+        loader: 'less-loader' // compiles Less to CSS
+      }]
+    }]
+  }
+};
+```
+
+### sass-loader
+
+### postcss-loader
 
 ## 代码检查和测试
 
